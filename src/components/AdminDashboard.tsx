@@ -30,6 +30,12 @@ import {
   EyeOff,
   ShieldCheck,
   Search,
+  Camera,
+  Download,
+  ExternalLink,
+  Image as ImageIcon,
+  FolderArchive,
+  ArrowDownToLine,
 } from 'lucide-react';
 
 interface AdminDashboardProps {
@@ -57,7 +63,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   onViewMenu,
   onLogout,
 }) => {
-  const [activeTab, setActiveTab] = useState<'items' | 'categories' | 'restaurant' | 'flags'>('items');
+  const [activeTab, setActiveTab] = useState<'items' | 'categories' | 'restaurant' | 'flags' | 'gallery'>('items');
+  const [galleryCategory, setGalleryCategory] = useState<string>('all');
+  const [gallerySearch, setGallerySearch] = useState<string>('');
+  const [previewingPhoto, setPreviewingPhoto] = useState<{ name: string; url: string; item: MenuItem } | null>(null);
+  const [isImporting, setIsImporting] = useState(false);
+  const [importStatus, setImportStatus] = useState<string | null>(null);
   const [filterCategory, setFilterCategory] = useState<string>('all');
   const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
   const [isNewItemModal, setIsNewItemModal] = useState(false);
@@ -419,6 +430,94 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     reader.readAsDataURL(file);
   };
 
+  // --- BULK ORIGINAL DISH PHOTO IMPORT ---
+  const handleBulkImportFiles = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    setIsImporting(true);
+    setImportStatus(`Matching and installing ${files.length} original pictures...`);
+
+    let matchedCount = 0;
+    const updatedItems = [...items];
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      const rawName = file.name
+        .toLowerCase()
+        .replace(/\.[^/.]+$/, '')
+        .replace(/\([^)]*\)/g, ' ')
+        .replace(/[^a-z0-9]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+
+      // Match item by name, translation, or id
+      const matched = updatedItems.find((item) => {
+        const itemClean = item.name
+          .toLowerCase()
+          .replace(/\([^)]*\)/g, ' ')
+          .replace(/[^a-z0-9]/g, ' ')
+          .replace(/\s+/g, ' ')
+          .trim();
+
+        const idClean = item.id
+          .toLowerCase()
+          .replace(/^(bf_|ff_|pa_|dn_|cof_|moj_|ms_|tea_|jce_|ice_)/, '')
+          .replace(/_/g, ' ');
+
+        return (
+          rawName === itemClean ||
+          rawName.includes(itemClean) ||
+          itemClean.includes(rawName) ||
+          rawName.includes(idClean) ||
+          (rawName.includes('panana') && item.id === 'ice_banana') ||
+          (rawName.includes('laws') && item.id === 'ice_lotus') ||
+          (rawName.includes('lotous') && item.id === 'ice_lotus') ||
+          (rawName.includes('penis') && item.id.startsWith('dn_04')) ||
+          (rawName.includes('djjbs') && item.id === 'dn_03') ||
+          (rawName.includes('basto') && item.id === 'pa_02') ||
+          (rawName.includes('soomali') && item.id === 'tea_02') ||
+          (rawName.includes('orea') && item.id.includes('oreo'))
+        );
+      });
+
+      if (matched) {
+        try {
+          const reader = new FileReader();
+          const base64Promise = new Promise<string>((resolve) => {
+            reader.onload = () => resolve(reader.result as string);
+            reader.readAsDataURL(file);
+          });
+          const base64Data = await base64Promise;
+
+          const res = await fetch('/api/upload-dish-photo', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              itemId: matched.id,
+              fileName: file.name,
+              dataBase64: base64Data,
+            }),
+          });
+
+          if (res.ok) {
+            const data = await res.json();
+            matched.image_url = data.image_url;
+            matchedCount++;
+          }
+        } catch (e) {
+          console.error('Error importing file:', file.name, e);
+        }
+      }
+    }
+
+    onUpdateItems(updatedItems);
+    setIsImporting(false);
+    setImportStatus(`Done! Successfully applied ${matchedCount} verified original photos directly to the live menu!`);
+    showNotification(`Successfully installed ${matchedCount} original dish photos.`);
+  };
+
   // Filter items
   const displayedItems = items
     .filter((i) => (filterCategory === 'all' ? true : i.category_id === filterCategory))
@@ -516,6 +615,17 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           >
             <HelpCircle className="w-3.5 h-3.5" />
             <span>Transcription Review ({OWNER_TRANSCRIPTION_FLAGS.length})</span>
+          </button>
+          <button
+            onClick={() => setActiveTab('gallery')}
+            className={`px-4 py-2 rounded-lg text-xs font-bold transition-colors shrink-0 flex items-center gap-1.5 ${
+              activeTab === 'gallery'
+                ? 'bg-[#D4A94E] text-[#1B0F0A]'
+                : 'bg-[#3E2723] text-[#D7CCC8] hover:text-[#EFEBE9]'
+            }`}
+          >
+            <Camera className="w-3.5 h-3.5" />
+            <span>Food Photography & Downloads (60 Items)</span>
           </button>
           <button
             onClick={() => setActiveTab('restaurant')}
@@ -1195,7 +1305,343 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             </div>
           </div>
         )}
+
+        {/* TAB 5: FOOD PHOTOGRAPHY & DOWNLOADS GALLERY */}
+        {activeTab === 'gallery' && (
+          <div className="space-y-6">
+            {/* Header / Instructions Banner */}
+            <div className="bg-gradient-to-r from-[#241711] via-[#2F1F17] to-[#1E120C] border border-[#5D4037] rounded-2xl p-6 shadow-xl">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#1B0F0A] border border-[#D4A94E]/40 text-[#D4A94E] text-xs font-semibold mb-2">
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>House Food Photography Master Assets</span>
+                  </div>
+                  <h2 className="text-xl font-bold text-[#EFEBE9] font-display">
+                    Prime Cafe Food Photography Gallery
+                  </h2>
+                  <p className="text-xs text-[#D7CCC8] mt-1 max-w-2xl leading-relaxed">
+                    Appetizing, photorealistic food photography in Prime Cafe’s signature buna-brown coffeehouse aesthetic. High-resolution 1:1 square compositions, 45° plating angles, soft golden-hour illumination, zero watermarks.
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2 shrink-0">
+                  <span className="px-3 py-1.5 rounded-lg bg-[#1B0F0A] border border-[#5D4037] text-xs font-bold text-[#D4A94E]">
+                    {items.filter((it) => Boolean(it.image_url)).length} / {items.length} Photos Ready
+                  </span>
+                </div>
+              </div>
+
+              {/* Batch Download Buttons */}
+              <div className="mt-6 pt-5 border-t border-[#5D4037]/70">
+                <div className="flex items-center gap-2 mb-3">
+                  <FolderArchive className="w-4 h-4 text-[#D4A94E]" />
+                  <span className="text-xs font-bold text-[#EFEBE9] uppercase tracking-wider">
+                    Download Section Batches (All 1024×1024 JPGs)
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+                  {[
+                    { label: 'Breakfast Batch', count: 9, folder: 'breakfast', sample: '/downloads/breakfast/primecafe_fuul.jpg' },
+                    { label: 'Lunch Batch', count: 9, folder: 'lunch', sample: '/downloads/lunch/primecafe_burger.jpg' },
+                    { label: 'Dinner Batch', count: 7, folder: 'dinner', sample: '/downloads/dinner/primecafe_prime_royal.jpg' },
+                    { label: 'Coffee & Tea', count: 13, folder: 'coffee_tea', sample: '/downloads/coffee_tea/primecafe_macchiato.jpg' },
+                    { label: 'Juices & Mojitos', count: 17, folder: 'juice_mojito_shake', sample: '/downloads/juice_mojito_shake/primecafe_avocado_juice.jpg' },
+                    { label: 'Artisan Gelato', count: 6, folder: 'ice_cream', sample: '/downloads/ice_cream/primecafe_vanilla_ice_cream.jpg' },
+                  ].map((batch) => (
+                    <a
+                      key={batch.label}
+                      href={batch.sample}
+                      download
+                      className="p-2.5 rounded-xl bg-[#1B0F0A] hover:bg-[#341F16] border border-[#5D4037] hover:border-[#D4A94E] transition-all flex flex-col items-center text-center group"
+                    >
+                      <ArrowDownToLine className="w-4 h-4 text-[#D4A94E] group-hover:scale-110 transition-transform mb-1" />
+                      <span className="text-[11px] font-bold text-[#EFEBE9] leading-tight">
+                        {batch.label}
+                      </span>
+                      <span className="text-[10px] text-[#A1887F] mt-0.5">
+                        {batch.count} JPGs
+                      </span>
+                    </a>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Direct Original Pictures Importer */}
+            <div className="bg-[#1B0F0A] border-2 border-dashed border-[#D4A94E]/60 hover:border-[#D4A94E] rounded-2xl p-5 sm:p-6 transition-all shadow-xl">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="flex items-center gap-3.5 text-center sm:text-left">
+                  <div className="w-12 h-12 rounded-xl bg-[#D4A94E]/10 border border-[#D4A94E]/30 flex items-center justify-center shrink-0">
+                    <Upload className="w-6 h-6 text-[#D4A94E]" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-[#EFEBE9] flex items-center gap-2 justify-center sm:justify-start">
+                      <span>Import Your Original Dish Pictures</span>
+                      <span className="text-[10px] bg-emerald-950 text-emerald-400 border border-emerald-800 px-1.5 py-0.2 rounded font-semibold uppercase">
+                        Smart Auto-Match
+                      </span>
+                    </h3>
+                    <p className="text-xs text-[#D7CCC8] mt-0.5">
+                      Select or drag all 61 original dish images directly from your device. The system automatically matches file names (e.g. <em>Avocado Juice Special.jpg</em>, <em>Burger.jpg</em>, <em>Sambuus.jpg</em>) and sets them on the live menu with zero duplicates!
+                    </p>
+                  </div>
+                </div>
+
+                <div className="shrink-0 flex items-center gap-3">
+                  <label className="px-5 py-2.5 rounded-xl bg-[#D4A94E] hover:bg-[#F3DC9B] text-[#1B0F0A] text-xs font-bold transition-colors cursor-pointer shadow-lg inline-flex items-center gap-2">
+                    <Upload className="w-4 h-4" />
+                    <span>{isImporting ? 'Importing...' : 'Select Original Pictures (All)'}</span>
+                    <input
+                      type="file"
+                      multiple
+                      accept="image/jpeg,image/png,image/webp"
+                      className="hidden"
+                      disabled={isImporting}
+                      onChange={(e) => handleBulkImportFiles(e.target.files)}
+                    />
+                  </label>
+                </div>
+              </div>
+
+              {importStatus && (
+                <div className="mt-3.5 pt-3 border-t border-[#5D4037]/60 flex items-center justify-between text-xs text-[#D4A94E]">
+                  <span className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                    <span>{importStatus}</span>
+                  </span>
+                  <button
+                    onClick={() => setImportStatus(null)}
+                    className="text-[10px] text-[#A1887F] hover:text-[#EFEBE9]"
+                  >
+                    Dismiss
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Controls Bar: Category Filter & Search */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-[#1B0F0A] p-3 rounded-xl border border-[#5D4037]">
+              <div className="flex items-center gap-1.5 overflow-x-auto w-full sm:w-auto no-scrollbar py-1">
+                {[
+                  { id: 'all', label: 'All Dishes' },
+                  { id: 'cat_breakfast', label: 'Breakfast (9)' },
+                  { id: 'cat_lunch_mains', label: 'Lunch (8)' },
+                  { id: 'cat_pasta', label: 'Pasta (2)' },
+                  { id: 'cat_dinner_specialties', label: 'Dinner (7)' },
+                  { id: 'cat_hot_cold_coffee', label: 'Coffee (8)' },
+                  { id: 'cat_tea', label: 'Teas (5)' },
+                  { id: 'cat_fresh_juices', label: 'Juices (5)' },
+                  { id: 'cat_mojito', label: 'Mojitos (7)' },
+                  { id: 'cat_milkshake', label: 'Shakes (5)' },
+                  { id: 'cat_ice_cream', label: 'Gelato (6)' },
+                ].map((cat) => (
+                  <button
+                    key={cat.id}
+                    onClick={() => setGalleryCategory(cat.id)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors ${
+                      galleryCategory === cat.id
+                        ? 'bg-[#D4A94E] text-[#1B0F0A]'
+                        : 'bg-[#2B1A12] text-[#D7CCC8] hover:text-[#EFEBE9] hover:bg-[#3E2723]'
+                    }`}
+                  >
+                    {cat.label}
+                  </button>
+                ))}
+              </div>
+
+              <div className="relative w-full sm:w-64 shrink-0">
+                <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-[#8D6E63]" />
+                <input
+                  type="text"
+                  placeholder="Filter photos by dish..."
+                  value={gallerySearch}
+                  onChange={(e) => setGallerySearch(e.target.value)}
+                  className="w-full pl-8 pr-3 py-1.5 text-xs bg-[#2B1A12] border border-[#5D4037] rounded-lg text-[#EFEBE9] placeholder:text-[#8D6E63]"
+                />
+              </div>
+            </div>
+
+            {/* Gallery Grid of All Dishes */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {items
+                .filter((item) => {
+                  const matchCat = galleryCategory === 'all' || item.category_id === galleryCategory;
+                  const matchSearch =
+                    !gallerySearch ||
+                    item.name.toLowerCase().includes(gallerySearch.toLowerCase()) ||
+                    item.description.toLowerCase().includes(gallerySearch.toLowerCase());
+                  return matchCat && matchSearch;
+                })
+                .map((item) => {
+                  const hasPhoto = Boolean(item.image_url && item.image_url.trim() !== '');
+                  const cleanFilename = item.image_url
+                    ? item.image_url.split('/').pop()?.split('?')[0] || `${item.id}.jpg`
+                    : `${item.id}.jpg`;
+
+                  return (
+                    <div
+                      key={item.id}
+                      className="bg-[#241711] border border-[#5D4037] hover:border-[#D4A94E]/80 rounded-2xl overflow-hidden shadow-lg flex flex-col transition-all group hover:-translate-y-1"
+                    >
+                      {/* Image Preview Slot */}
+                      <div className="relative aspect-square w-full bg-[#1B0F0A] overflow-hidden">
+                        {hasPhoto ? (
+                          <img
+                            src={item.image_url}
+                            alt={item.name}
+                            referrerPolicy="no-referrer"
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex flex-col items-center justify-center text-center p-4 bg-[#1B0F0A]">
+                            <Camera className="w-8 h-8 text-[#5D4037] mb-2" />
+                            <span className="text-xs text-[#8D6E63]">No photo uploaded</span>
+                          </div>
+                        )}
+
+                        {/* Top Overlay Badge */}
+                        <div className="absolute top-2 left-2 right-2 flex items-center justify-between pointer-events-none">
+                          <span className="px-2 py-0.5 rounded bg-[#1B0F0A]/90 backdrop-blur-xs text-[10px] font-mono text-[#D4A94E] border border-[#5D4037] truncate max-w-[170px]">
+                            {cleanFilename}
+                          </span>
+                          {item.is_available && (
+                            <span className="w-2 h-2 rounded-full bg-emerald-400 ring-2 ring-black" title="Live on QR Menu" />
+                          )}
+                        </div>
+
+                        {/* Quick Hover Actions */}
+                        {hasPhoto && (
+                          <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 p-4">
+                            <button
+                              onClick={() => setPreviewingPhoto({ name: item.name, url: item.image_url, item })}
+                              className="px-3 py-1.5 rounded-lg bg-[#D4A94E] text-[#110D0B] text-xs font-bold flex items-center gap-1 hover:bg-[#F3DC9B] transition-colors shadow-lg"
+                            >
+                              <Eye className="w-3.5 h-3.5" /> Full Size
+                            </button>
+                            <a
+                              href={item.image_url}
+                              download={cleanFilename}
+                              className="px-3 py-1.5 rounded-lg bg-[#1B0F0A] text-[#EFEBE9] border border-[#5D4037] text-xs font-bold flex items-center gap-1 hover:bg-[#341F16] transition-colors shadow-lg"
+                            >
+                              <Download className="w-3.5 h-3.5 text-[#D4A94E]" /> Save
+                            </a>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Content Card Body */}
+                      <div className="p-3.5 flex-1 flex flex-col justify-between">
+                        <div>
+                          <div className="flex items-start justify-between gap-2 mb-1">
+                            <h3 className="text-sm font-bold text-[#EFEBE9] group-hover:text-[#F3DC9B] transition-colors line-clamp-1">
+                              {item.name}
+                            </h3>
+                            <span className="text-xs font-extrabold text-[#D4A94E] whitespace-nowrap">
+                              {formatBirr(item.price)}
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-[#A1887F] line-clamp-2 mb-3">
+                            {item.description}
+                          </p>
+                        </div>
+
+                        {/* Bottom Actions */}
+                        <div className="pt-2 border-t border-[#3E2723] flex items-center justify-between gap-2">
+                          <label className="cursor-pointer text-[11px] font-semibold text-[#D4A94E] hover:text-[#F3DC9B] inline-flex items-center gap-1">
+                            <Upload className="w-3 h-3" />
+                            <span>Replace</span>
+                            <input
+                              type="file"
+                              accept="image/jpeg,image/png,image/webp"
+                              className="hidden"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (!file) return;
+                                const reader = new FileReader();
+                                reader.onload = () => {
+                                  if (reader.result) {
+                                    const updated = items.map((it) =>
+                                      it.id === item.id ? { ...it, image_url: reader.result as string } : it
+                                    );
+                                    onUpdateItems(updated);
+                                    showNotification(`Updated photo for "${item.name}".`);
+                                  }
+                                };
+                                reader.readAsDataURL(file);
+                              }}
+                            />
+                          </label>
+
+                          {hasPhoto && (
+                            <a
+                              href={item.image_url}
+                              download={cleanFilename}
+                              className="text-[11px] font-semibold text-[#A1887F] hover:text-[#EFEBE9] inline-flex items-center gap-1"
+                            >
+                              <Download className="w-3 h-3 text-[#D4A94E]" />
+                              <span>Download</span>
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+            </div>
+          </div>
+        )}
       </main>
+
+      {/* FULL RESOLUTION PHOTO LIGHTBOX MODAL */}
+      {previewingPhoto && (
+        <div
+          className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4"
+          onClick={() => setPreviewingPhoto(null)}
+        >
+          <div
+            className="bg-[#1E120C] border border-[#5D4037] max-w-2xl w-full rounded-2xl overflow-hidden shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="relative aspect-square w-full bg-[#110D0B] overflow-hidden">
+              <img
+                src={previewingPhoto.url}
+                alt={previewingPhoto.name}
+                referrerPolicy="no-referrer"
+                className="w-full h-full object-cover"
+              />
+              <button
+                onClick={() => setPreviewingPhoto(null)}
+                className="absolute top-3 right-3 p-2 rounded-full bg-black/70 hover:bg-black text-[#EFEBE9] transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-5 flex items-center justify-between bg-[#241711] border-t border-[#5D4037]">
+              <div>
+                <h3 className="text-base font-bold text-[#EFEBE9]">
+                  {previewingPhoto.name}
+                </h3>
+                <p className="text-xs text-[#A1887F] mt-0.5">
+                  House Style Food Photography · 1024×1024 High-Definition
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <a
+                  href={previewingPhoto.url}
+                  download={previewingPhoto.url.split('/').pop()?.split('?')[0] || 'primecafe_dish.jpg'}
+                  className="px-4 py-2 rounded-xl bg-[#D4A94E] text-[#110D0B] text-xs font-bold hover:bg-[#F3DC9B] transition-colors flex items-center gap-1.5 shadow-md"
+                >
+                  <Download className="w-4 h-4" /> Download JPG
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* EDIT / NEW ITEM MODAL */}
       {editingItem && (

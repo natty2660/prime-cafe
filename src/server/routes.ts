@@ -1,4 +1,6 @@
 import { Router, Request, Response, NextFunction } from 'express';
+import fs from 'fs';
+import path from 'path';
 import {
   getDatabase,
   saveDatabase,
@@ -339,3 +341,42 @@ apiRouter.get('/qr/:slug', async (req: Request, res: Response) => {
     res.status(500).json({ error: 'Failed generating QR code.' });
   }
 });
+
+// 16. Upload Dish Photo (Auth) - Saves file directly to public/assets/images
+apiRouter.post('/upload-dish-photo', requireAdmin, (req: Request, res: Response) => {
+  const { itemId, fileName, dataBase64 } = req.body;
+  if (!itemId || !dataBase64) {
+    res.status(400).json({ error: 'itemId and dataBase64 are required.' });
+    return;
+  }
+
+  try {
+    const matches = dataBase64.match(/^data:image\/([a-zA-Z0-9]+);base64,(.+)$/);
+    const ext = matches ? matches[1].replace('jpeg', 'jpg') : 'jpg';
+    const rawData = matches ? matches[2] : dataBase64;
+    const buffer = Buffer.from(rawData, 'base64');
+
+    const safeSlug = (fileName || itemId)
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, '_')
+      .replace(/_+/g, '_')
+      .replace(/^_|_$/g, '');
+    const outFileName = `original_${safeSlug}.${ext}`;
+    const targetPath = path.join(process.cwd(), 'public', 'assets', 'images', outFileName);
+
+    fs.writeFileSync(targetPath, buffer);
+
+    const publicUrl = `/assets/images/${outFileName}`;
+    const db = getDatabase();
+    const item = db.items.find((i) => i.id === itemId);
+    if (item) {
+      item.image_url = publicUrl;
+      saveDatabase(db);
+    }
+
+    res.json({ success: true, image_url: publicUrl });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+

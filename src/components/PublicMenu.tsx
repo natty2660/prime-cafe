@@ -416,6 +416,7 @@ export const PublicMenu: React.FC<PublicMenuProps> = ({
                 <img
                   src={selectedItem.image_url}
                   alt={selectedItem.name}
+                  referrerPolicy="no-referrer"
                   className="w-full h-full object-cover"
                 />
                 <button

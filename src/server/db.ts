@@ -66,13 +66,7 @@ export async function initPostgresDatabase(): Promise<boolean> {
           const mergedItems = (stored.items && stored.items.length > 0 ? stored.items : fresh.items).map((item) => {
             const freshItem = freshMap.get(item.id);
             if (freshItem && freshItem.image_url) {
-              if (
-                !item.image_url ||
-                (item.image_url === '/assets/images/prime_cafe_macchiato_1790215844194.jpg' &&
-                  freshItem.image_url !== '/assets/images/prime_cafe_macchiato_1790215844194.jpg') ||
-                (item.image_url === '/assets/images/refreshing_mojito_cocktail_1790216759973.jpg' &&
-                  freshItem.image_url !== '/assets/images/refreshing_mojito_cocktail_1790216759973.jpg')
-              ) {
+              if (!item.image_url || item.image_url.startsWith('/assets/images/')) {
                 return { ...item, image_url: freshItem.image_url };
               }
             }
@@ -152,13 +146,7 @@ export function getDatabase(): DatabaseState {
         parsed.items = parsed.items.map((item) => {
           const freshItem = freshMap.get(item.id);
           if (freshItem && freshItem.image_url) {
-            if (
-              !item.image_url ||
-              (item.image_url === '/assets/images/prime_cafe_macchiato_1790215844194.jpg' &&
-                freshItem.image_url !== '/assets/images/prime_cafe_macchiato_1790215844194.jpg') ||
-              (item.image_url === '/assets/images/refreshing_mojito_cocktail_1790216759973.jpg' &&
-                freshItem.image_url !== '/assets/images/refreshing_mojito_cocktail_1790216759973.jpg')
-            ) {
+            if (!item.image_url || item.image_url.startsWith('/assets/images/')) {
               return { ...item, image_url: freshItem.image_url };
             }
           }
