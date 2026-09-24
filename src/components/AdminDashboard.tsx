@@ -29,6 +29,7 @@ import {
   KeyRound,
   EyeOff,
   ShieldCheck,
+  Search,
 } from 'lucide-react';
 
 interface AdminDashboardProps {
@@ -1285,33 +1286,61 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 />
               </div>
 
-              {/* Image Upload or URL */}
-              <div>
-                <label className="block text-xs font-semibold text-[#A1887F] mb-1">
-                  Food Photo (Upload or URL)
-                </label>
-                <div className="flex items-center gap-3">
-                  <input
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp"
-                    onChange={handleImageUpload}
-                    className="text-xs text-[#A1887F] file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-[#3E2723] file:text-[#D4A94E] hover:file:bg-[#4E342E]"
-                  />
+              {/* Image Upload, Direct URL, and Google Search */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="block text-xs font-semibold text-[#A1887F]">
+                    Food & Drink Photo
+                  </label>
+                  {editingItem.name ? (
+                    <a
+                      href={`https://www.google.com/search?tbm=isch&q=${encodeURIComponent(editingItem.name + ' food beverage')}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-[11px] text-[#D4A94E] hover:underline font-semibold"
+                    >
+                      <Search className="w-3 h-3" /> Search Google Images ↗
+                    </a>
+                  ) : null}
                 </div>
+
+                <div className="space-y-1.5">
+                  <input
+                    type="text"
+                    value={editingItem.image_url}
+                    onChange={(e) => setEditingItem({ ...editingItem, image_url: e.target.value })}
+                    placeholder="Direct Image URL (e.g. /assets/images/... or https://...)"
+                    className="w-full px-3 py-1.5 text-xs bg-[#1B0F0A] border border-[#5D4037] rounded-lg text-[#EFEBE9] placeholder:text-[#8D6E63]"
+                  />
+
+                  <div className="flex items-center gap-3">
+                    <span className="text-[10px] text-[#8D6E63] shrink-0">or upload file:</span>
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      onChange={handleImageUpload}
+                      className="text-xs text-[#A1887F] file:mr-3 file:py-1 file:px-2.5 file:rounded-md file:border-0 file:text-[11px] file:font-semibold file:bg-[#3E2723] file:text-[#D4A94E] hover:file:bg-[#4E342E]"
+                    />
+                  </div>
+                </div>
+
                 {editingItem.image_url && (
-                  <div className="mt-2 flex items-center gap-2">
+                  <div className="mt-2 flex items-center gap-3 p-2 bg-[#1B0F0A] rounded-lg border border-[#3E2723]">
                     <img
                       src={editingItem.image_url}
                       alt="Preview"
-                      className="w-12 h-12 rounded object-cover border border-[#5D4037]"
+                      className="w-12 h-12 rounded-lg object-cover border border-[#5D4037]"
                     />
-                    <button
-                      type="button"
-                      onClick={() => setEditingItem({ ...editingItem, image_url: '' })}
-                      className="text-[11px] text-red-400 hover:underline"
-                    >
-                      Remove photo
-                    </button>
+                    <div className="flex flex-col">
+                      <span className="text-[11px] text-[#EFEBE9] font-medium">Photo assigned</span>
+                      <button
+                        type="button"
+                        onClick={() => setEditingItem({ ...editingItem, image_url: '' })}
+                        className="text-[10px] text-red-400 hover:underline text-left"
+                      >
+                        Remove photo
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
