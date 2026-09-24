@@ -41,14 +41,15 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
         setError(data.message || 'Invalid admin password. Please try again.');
       }
     } catch {
-      // Offline fallback: if backend isn't responding or client is offline, check standard default password
-      if (password.trim() === 'primecafe2026') {
+      // Offline fallback: check custom saved password or standard default
+      const savedCustom = typeof window !== 'undefined' ? localStorage.getItem('prime_cafe_custom_admin_password') : null;
+      if (password.trim() === (savedCustom || 'primecafe2026') || password.trim() === 'primecafe2026') {
         const mockToken = 'client_token_prime_cafe_2026';
         onSuccess(mockToken);
         onClose();
         setPassword('');
       } else {
-        setError('Incorrect password. Default for Prime Cafe is primecafe2026.');
+        setError('Incorrect admin password. Please try again.');
       }
     } finally {
       setIsLoading(false);

@@ -1,4 +1,12 @@
-export type MealTime = 'breakfast' | 'lunch' | 'dinner' | 'ice_cream' | 'all_day';
+export type MealTime =
+  | 'all'
+  | 'ice_cream'
+  | 'drinks'
+  | 'breakfast'
+  | 'lunch_dinner'
+  | 'lunch'
+  | 'dinner'
+  | 'all_day';
 
 export interface MenuItemSize {
   name: string;
@@ -12,6 +20,7 @@ export interface Restaurant {
   description: string;
   phone?: string;
   address?: string;
+  google_maps_url?: string;
   opening_hours?: string;
   wifi_available?: boolean;
   logo_url: string;

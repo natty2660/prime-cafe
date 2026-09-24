@@ -3,6 +3,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
 import { apiRouter } from './src/server/routes.ts';
+import { initPostgresDatabase } from './src/server/db.ts';
 
 dotenv.config();
 
@@ -25,6 +26,11 @@ app.use('/api', apiRouter);
 
 // Configure Vite in dev OR static build in production
 async function setupServer() {
+  // Initialize PostgreSQL database connection and sync state
+  await initPostgresDatabase().catch((err) => {
+    console.warn('Postgres startup note:', err.message);
+  });
+
   if (!isProduction) {
     // Dev mode with Vite middleware
     const { createServer } = await import('vite');

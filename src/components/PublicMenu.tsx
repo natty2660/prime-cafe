@@ -7,8 +7,6 @@ import {
   Search,
   Clock,
   MapPin,
-  Phone,
-  Wifi,
   QrCode,
   Lock,
   X,
@@ -18,6 +16,8 @@ import {
   IceCream,
   Coffee,
   Camera,
+  Navigation,
+  UtensilsCrossed,
 } from 'lucide-react';
 
 interface PublicMenuProps {
@@ -36,7 +36,7 @@ export const PublicMenu: React.FC<PublicMenuProps> = ({
   onOpenQR,
 }) => {
   const suggestedMeal = useMemo(() => getSuggestedMealTime(), []);
-  const [selectedMealTime, setSelectedMealTime] = useState<MealTime | 'all'>(suggestedMeal);
+  const [selectedMealTime, setSelectedMealTime] = useState<MealTime | 'all'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
@@ -70,11 +70,19 @@ export const PublicMenu: React.FC<PublicMenuProps> = ({
     if (selectedMealTime !== 'all') {
       if (selectedMealTime === 'ice_cream') {
         list = categories.filter((c) => c.meal_time === 'ice_cream');
-      } else if (selectedMealTime === 'all_day') {
-        list = categories.filter((c) => c.meal_time === 'all_day');
-      } else {
+      } else if (selectedMealTime === 'drinks' || selectedMealTime === 'all_day') {
+        list = categories.filter((c) => c.meal_time === 'drinks' || c.meal_time === 'all_day');
+      } else if (selectedMealTime === 'breakfast') {
+        list = categories.filter((c) => c.meal_time === 'breakfast');
+      } else if (selectedMealTime === 'lunch_dinner' || selectedMealTime === 'lunch' || selectedMealTime === 'dinner') {
         list = categories.filter(
-          (c) => c.meal_time === selectedMealTime || (selectedMealTime === 'lunch' && c.id === 'cat_pasta')
+          (c) =>
+            c.meal_time === 'lunch_dinner' ||
+            c.meal_time === 'lunch' ||
+            c.meal_time === 'dinner' ||
+            c.id === 'cat_lunch_mains' ||
+            c.id === 'cat_pasta' ||
+            c.id === 'cat_dinner_specialties'
         );
       }
     }
@@ -107,14 +115,18 @@ export const PublicMenu: React.FC<PublicMenuProps> = ({
     return map;
   }, [filteredCategories, items, searchQuery]);
 
-  // Meal time tabs including explicit Ice Cream tab alongside breakfast, lunch, dinner
+  // Main Categories tabs arranged in user requested sequence:
+  // 1. Full Menu
+  // 2. Ice Cream
+  // 3. Drinks
+  // 4. Breakfast
+  // 5. Lunch & Dinner (merged at one)
   const mealTimeTabs = [
-    { id: 'breakfast', label: 'Breakfast', sub: '6:30 AM – 12 PM', icon: Coffee },
-    { id: 'lunch', label: 'Lunch', sub: '11:30 AM – 5 PM', icon: null },
-    { id: 'dinner', label: 'Dinner', sub: '5 PM – 11 PM', icon: null },
+    { id: 'all', label: 'Full Menu', sub: 'Everything', icon: Sparkles },
     { id: 'ice_cream', label: 'Ice Cream', sub: 'Artisan Gelato', icon: IceCream },
-    { id: 'all_day', label: 'Coffee & Drinks', sub: 'All Day', icon: null },
-    { id: 'all', label: 'Full Menu', sub: 'Everything', icon: null },
+    { id: 'drinks', label: 'Drinks', sub: 'Coffee, Juices & Mojitos', icon: Coffee },
+    { id: 'breakfast', label: 'Breakfast', sub: '8:30 AM – 12 PM', icon: null },
+    { id: 'lunch_dinner', label: 'Lunch & Dinner', sub: 'Mains & Fast Food', icon: UtensilsCrossed },
   ] as const;
 
   const currentDisplayPrice = useMemo(() => {
@@ -159,13 +171,13 @@ export const PublicMenu: React.FC<PublicMenuProps> = ({
       {/* Hero / Enhanced Wood Slat Architectural Banner */}
       <div className="relative bg-[#110D0B] border-b border-[#3E2723] overflow-hidden">
         <div className="relative h-48 sm:h-64 w-full">
-          {/* Enhanced luxury acoustic wood slat backdrop */}
+          {/* Architectural wood slat feature wall with Prime Cafe logo badge (cafeteria tables cropped) */}
           <img
-            src="/assets/images/prime_cafe_luxury_bg_1790216722377.jpg"
-            alt="Prime Cafe Luxury Interior"
-            className="w-full h-full object-cover opacity-60"
+            src="/assets/images/prime_cafe_wall_logo_1790230397113.jpg"
+            alt="Prime Cafe Wall with Logo"
+            className="w-full h-full object-cover opacity-75"
             onError={(e) => {
-              (e.target as HTMLImageElement).src = '/assets/images/prime_cafe_hero_1790215822508.jpg';
+              (e.target as HTMLImageElement).src = '/assets/images/prime_cafe_luxury_bg_1790216722377.jpg';
             }}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-[#1A120E] via-[#1A120E]/50 to-transparent" />
@@ -205,24 +217,32 @@ export const PublicMenu: React.FC<PublicMenuProps> = ({
               </div>
             )}
             {restaurant.address && (
-              <div className="flex items-center gap-1.5">
-                <MapPin className="w-3.5 h-3.5 text-[#D4A94E]" />
-                <span>{restaurant.address}</span>
-              </div>
-            )}
-            {restaurant.phone && (
-              <a
-                href={`tel:${restaurant.phone}`}
-                className="flex items-center gap-1.5 hover:text-[#EFEBE9] transition-colors"
-              >
-                <Phone className="w-3.5 h-3.5 text-[#D4A94E]" />
-                <span>{restaurant.phone}</span>
-              </a>
-            )}
-            {restaurant.wifi_available && (
-              <div className="flex items-center gap-1.5">
-                <Wifi className="w-3.5 h-3.5 text-[#D4A94E]" />
-                <span>High-Speed Wi-Fi</span>
+              <div className="flex items-center flex-wrap gap-2">
+                <div className="flex items-center gap-1.5">
+                  <MapPin className="w-3.5 h-3.5 text-[#D4A94E]" />
+                  <span>{restaurant.address}</span>
+                </div>
+                <a
+                  href={restaurant.google_maps_url || 'https://maps.app.goo.gl/Tnb9gLs98u4fihhC9'}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    backgroundColor: '#007bff',
+                    color: 'white',
+                    padding: '4px 10px',
+                    textDecoration: 'none',
+                    borderRadius: '5px',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    fontWeight: '600',
+                    fontSize: '11px',
+                  }}
+                  title="Get Directions to Prime Cafe on Google Maps"
+                >
+                  <Navigation className="w-3 h-3 text-white" />
+                  <span>Get Directions</span>
+                </a>
               </div>
             )}
           </div>
@@ -342,8 +362,10 @@ export const PublicMenu: React.FC<PublicMenuProps> = ({
                     <span className="text-[11px] text-[#A1887F] uppercase tracking-wider font-semibold">
                       {category.meal_time === 'ice_cream'
                         ? 'Gelateria'
-                        : category.meal_time === 'all_day'
-                        ? 'All Day'
+                        : category.meal_time === 'drinks' || category.meal_time === 'all_day'
+                        ? 'Drinks'
+                        : category.meal_time === 'lunch_dinner' || category.meal_time === 'lunch' || category.meal_time === 'dinner'
+                        ? 'Lunch & Dinner'
                         : category.meal_time}
                     </span>
                   </div>
@@ -354,7 +376,7 @@ export const PublicMenu: React.FC<PublicMenuProps> = ({
                       No items currently listed in this section.
                     </p>
                   ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-2.5">
                       {catItems.map((item) => (
                         <ItemCard
                           key={item.id}
@@ -516,6 +538,51 @@ export const PublicMenu: React.FC<PublicMenuProps> = ({
         </div>
       )}
 
+      {/* Location & Directions Section */}
+      <section className="max-w-4xl mx-auto px-4 sm:px-6 mt-14 mb-4">
+        <div className="bg-[#241711] border border-[#3E2723] rounded-2xl p-6 sm:p-8 flex flex-col sm:flex-row items-center justify-between gap-6 shadow-xl">
+          <div className="space-y-2 text-center sm:text-left">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#1A120E] border border-[#5D4037] text-xs text-[#D4A94E] font-medium">
+              <MapPin className="w-3.5 h-3.5" />
+              <span>Location & Directions</span>
+            </div>
+            <h3 className="text-xl font-bold text-[#EFEBE9] font-display">
+              Visit Prime Cafe
+            </h3>
+            <p className="text-sm text-[#D7CCC8]">
+              {restaurant.address || 'Jijiga, Ethiopia'}
+            </p>
+            {restaurant.opening_hours && (
+              <p className="text-xs text-[#A1887F] flex items-center justify-center sm:justify-start gap-1.5">
+                <Clock className="w-3.5 h-3.5 text-[#D4A94E]" />
+                <span>{restaurant.opening_hours}</span>
+              </p>
+            )}
+          </div>
+
+          <a
+            href={restaurant.google_maps_url || 'https://maps.app.goo.gl/Tnb9gLs98u4fihhC9'}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              backgroundColor: '#007bff',
+              color: 'white',
+              padding: '10px 20px',
+              textDecoration: 'none',
+              borderRadius: '5px',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              fontWeight: 600,
+              boxShadow: '0 4px 12px rgba(0, 123, 255, 0.35)',
+            }}
+          >
+            <Navigation className="w-4 h-4 text-white" />
+            Get Directions
+          </a>
+        </div>
+      </section>
+
       {/* Modern International Footer */}
       <footer className="mt-16 border-t border-[#3E2723] bg-[#110D0B] py-10 px-4 text-center text-xs text-[#8D6E63]">
         <div className="max-w-md mx-auto space-y-3">
@@ -524,7 +591,7 @@ export const PublicMenu: React.FC<PublicMenuProps> = ({
             Contemporary Coffee Lounge · Gourmet Kitchen · Artisan Ice Cream
           </p>
           <div className="flex items-center justify-center gap-3 pt-2 text-[11px] text-[#A1887F]">
-            <span>Addis Ababa</span>
+            <span>Jijiga, Ethiopia</span>
             <span>·</span>
             <span>Ethiopian Birr Only</span>
             <span>·</span>

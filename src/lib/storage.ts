@@ -1,13 +1,14 @@
 import { Restaurant, Category, MenuItem, MenuResponse, MealTime } from '../types/index.ts';
 import { PRIME_CAFE_RESTAURANT, SEED_CATEGORIES, SEED_MENU_ITEMS } from '../data/seedData.ts';
 
-const STORAGE_KEY = 'prime_cafe_store_v1';
+const STORAGE_KEY = 'prime_cafe_store_v6';
 
 export interface DatabaseState {
   restaurant: Restaurant;
   categories: Category[];
   items: MenuItem[];
   last_updated: string;
+  admin_password?: string;
 }
 
 export function getInitialState(): DatabaseState {
@@ -78,19 +79,9 @@ export function validateBirrPrice(value: string | number): { valid: boolean; val
   return { valid: true, value: num };
 }
 
-// Meal time detector based on user's current local hour
-export function getSuggestedMealTime(date = new Date()): MealTime {
-  const hour = date.getHours();
-  // 06:00 - 11:59: Breakfast
-  if (hour >= 6 && hour < 12) {
-    return 'breakfast';
-  }
-  // 12:00 - 16:59: Lunch
-  if (hour >= 12 && hour < 17) {
-    return 'lunch';
-  }
-  // 17:00 - 23:59 or night: Dinner
-  return 'dinner';
+// Meal time detector: defaults to 'all' (Full Menu) as requested
+export function getSuggestedMealTime(_date = new Date()): MealTime {
+  return 'all';
 }
 
 // Generate menu response for a given slug

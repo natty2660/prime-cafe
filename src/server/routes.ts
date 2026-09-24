@@ -5,6 +5,7 @@ import {
   generateAdminToken,
   verifyAdminToken,
   checkAdminPassword,
+  setAdminPassword,
 } from './db.ts';
 import { buildMenuResponse, validateBirrPrice } from '../lib/storage.ts';
 import { generateQRCodeDataUrl } from '../lib/qr.ts';
@@ -25,6 +26,29 @@ const requireAdmin = (req: Request, res: Response, next: NextFunction) => {
 // 1. Health check
 apiRouter.get('/health', (_req: Request, res: Response) => {
   res.json({ status: 'ok', service: 'Prime Cafe QR Menu API', timestamp: new Date().toISOString() });
+});
+
+// Database status & PostgreSQL connectivity check
+apiRouter.get('/db/status', async (_req: Request, res: Response) => {
+  try {
+    const { getDatabaseStatus } = await import('./db.ts');
+    const status = await getDatabaseStatus();
+    res.json(status);
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Resync database with fresh seed and push to PostgreSQL (Admin only)
+apiRouter.post('/db/resync', requireAdmin, async (_req: Request, res: Response) => {
+  try {
+    const { getInitialState } = await import('../lib/storage.ts');
+    const fresh = getInitialState();
+    saveDatabase(fresh);
+    res.json({ success: true, message: 'Database resynchronized and updated in PostgreSQL successfully', state: fresh });
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
+  }
 });
 
 // 2. Public Menu Fetch by Slug (Single-query fast fetch)
@@ -65,6 +89,33 @@ apiRouter.get('/admin/verify', (req: Request, res: Response) => {
   } else {
     res.status(401).json({ valid: false });
   }
+});
+
+// 4b. Admin Change Password (Auth required)
+apiRouter.post('/admin/change-password', requireAdmin, (req: Request, res: Response) => {
+  const { currentPassword, newPassword } = req.body || {};
+
+  if (!newPassword || typeof newPassword !== 'string' || newPassword.trim().length < 4) {
+    res.status(400).json({ error: 'New password must be at least 4 characters.' });
+    return;
+  }
+
+  // Check current password if provided
+  if (currentPassword && !checkAdminPassword(currentPassword)) {
+    res.status(400).json({ error: 'Current password is incorrect.' });
+    return;
+  }
+
+  const success = setAdminPassword(newPassword.trim());
+  if (!success) {
+    res.status(500).json({ error: 'Failed to persist new password to database.' });
+    return;
+  }
+
+  res.json({
+    success: true,
+    message: 'Admin password successfully updated and persisted to database.',
+  });
 });
 
 // 5. Get Restaurant Profile
