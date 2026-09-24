@@ -62,6 +62,23 @@ export async function initPostgresDatabase(): Promise<boolean> {
         if (stored.restaurant && Array.isArray(stored.categories) && Array.isArray(stored.items)) {
           // If stored state is from an older schema/version, ensure current categories and address take precedence
           const fresh = getInitialState();
+          const freshMap = new Map(fresh.items.map((it) => [it.id, it]));
+          const mergedItems = (stored.items && stored.items.length > 0 ? stored.items : fresh.items).map((item) => {
+            const freshItem = freshMap.get(item.id);
+            if (freshItem && freshItem.image_url) {
+              if (
+                !item.image_url ||
+                (item.image_url === '/assets/images/prime_cafe_macchiato_1790215844194.jpg' &&
+                  freshItem.image_url !== '/assets/images/prime_cafe_macchiato_1790215844194.jpg') ||
+                (item.image_url === '/assets/images/refreshing_mojito_cocktail_1790216759973.jpg' &&
+                  freshItem.image_url !== '/assets/images/refreshing_mojito_cocktail_1790216759973.jpg')
+              ) {
+                return { ...item, image_url: freshItem.image_url };
+              }
+            }
+            return item;
+          });
+
           // Keep custom items/prices if already updated, but ensure location is Jijiga and categories are organized
           const merged: DatabaseState = {
             restaurant: {
@@ -73,7 +90,7 @@ export async function initPostgresDatabase(): Promise<boolean> {
               wifi_available: false,
             },
             categories: fresh.categories,
-            items: stored.items && stored.items.length > 0 ? stored.items : fresh.items,
+            items: mergedItems,
             last_updated: res.rows[0].updated_at || new Date().toISOString(),
             admin_password: stored.admin_password,
           };
@@ -130,6 +147,23 @@ export function getDatabase(): DatabaseState {
       const data = fs.readFileSync(filePath, 'utf-8');
       const parsed = JSON.parse(data) as DatabaseState;
       if (parsed.restaurant && Array.isArray(parsed.categories) && Array.isArray(parsed.items)) {
+        const fresh = getInitialState();
+        const freshMap = new Map(fresh.items.map((it) => [it.id, it]));
+        parsed.items = parsed.items.map((item) => {
+          const freshItem = freshMap.get(item.id);
+          if (freshItem && freshItem.image_url) {
+            if (
+              !item.image_url ||
+              (item.image_url === '/assets/images/prime_cafe_macchiato_1790215844194.jpg' &&
+                freshItem.image_url !== '/assets/images/prime_cafe_macchiato_1790215844194.jpg') ||
+              (item.image_url === '/assets/images/refreshing_mojito_cocktail_1790216759973.jpg' &&
+                freshItem.image_url !== '/assets/images/refreshing_mojito_cocktail_1790216759973.jpg')
+            ) {
+              return { ...item, image_url: freshItem.image_url };
+            }
+          }
+          return item;
+        });
         inMemoryState = parsed;
         return inMemoryState;
       }

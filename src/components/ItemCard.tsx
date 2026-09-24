@@ -28,18 +28,18 @@ export const ItemCard: React.FC<ItemCardProps> = ({
           onClick?.();
         }
       }}
-      className={`group relative flex flex-row items-center gap-3 p-2 sm:p-2.5 rounded-xl transition-all duration-150 cursor-pointer border ${
+      className={`group relative flex flex-row items-center gap-3.5 p-2.5 sm:p-3 rounded-2xl transition-all duration-200 cursor-pointer border ${
         item.is_available
-          ? 'bg-[#3E2723]/60 hover:bg-[#3E2723] border-[#5D4037]/80 hover:border-[#D4A94E]/60 shadow-xs hover:shadow-md'
+          ? 'bg-gradient-to-r from-[#2F1F17]/90 via-[#261811]/95 to-[#21140E] hover:from-[#3D261C] hover:via-[#331F16] hover:to-[#2A1810] border-[#5D4037]/70 hover:border-[#D4A94E]/80 shadow-xs hover:shadow-lg hover:-translate-y-0.5'
           : 'bg-[#2B1A12]/40 border-[#3E2723] opacity-65 cursor-default'
       }`}
     >
       {/* 
-        Image Presentation (Half-Size Compact Thumbnail):
-        Standard international items have verified food photography.
+        Image Presentation (High-Fidelity Visual Slot):
+        Standard items have verified precise photography.
         Local specialty items display a subtle branded kitchen badge.
       */}
-      <div className="relative w-14 h-14 sm:w-16 sm:h-16 shrink-0 rounded-lg overflow-hidden bg-[#1B0F0A] border border-[#5D4037]/60">
+      <div className="relative w-16 h-16 sm:w-20 sm:h-20 shrink-0 rounded-xl overflow-hidden bg-[#1B0F0A] border border-[#5D4037]/80 group-hover:border-[#D4A94E]/90 shadow-sm transition-all duration-200">
         {hasValidPhoto ? (
           <img
             src={item.image_url}
@@ -47,20 +47,20 @@ export const ItemCard: React.FC<ItemCardProps> = ({
             loading="lazy"
             referrerPolicy="no-referrer"
             onError={() => setImageFailed(true)}
-            className={`w-full h-full object-cover transition-transform duration-300 group-hover:scale-105 ${
+            className={`w-full h-full object-cover transition-transform duration-300 group-hover:scale-110 ${
               !item.is_available ? 'grayscale contrast-75' : ''
             }`}
           />
         ) : (
           <div className="w-full h-full flex flex-col items-center justify-center p-1.5 text-center bg-gradient-to-b from-[#2B1A12] to-[#1B0F0A]">
             {item.category_id === 'cat_ice_cream' ? (
-              <Sparkles className="w-4 h-4 text-[#D4A94E]/70" />
+              <Sparkles className="w-5 h-5 text-[#D4A94E]/80" />
             ) : item.category_id.includes('coffee') || item.category_id.includes('tea') ? (
-              <Coffee className="w-4 h-4 text-[#D4A94E]/70" />
+              <Coffee className="w-5 h-5 text-[#D4A94E]/80" />
             ) : (
-              <UtensilsCrossed className="w-4 h-4 text-[#D4A94E]/70" />
+              <UtensilsCrossed className="w-5 h-5 text-[#D4A94E]/80" />
             )}
-            <span className="text-[8px] text-[#A1887F] font-semibold tracking-wider uppercase mt-0.5">
+            <span className="text-[9px] text-[#D4A94E]/80 font-bold tracking-wider uppercase mt-1">
               Prime
             </span>
           </div>
@@ -68,8 +68,8 @@ export const ItemCard: React.FC<ItemCardProps> = ({
 
         {/* Popular Indicator */}
         {item.is_popular && item.is_available && (
-          <div className="absolute top-1 left-1 bg-[#D4A94E] text-[#1B0F0A] text-[8px] font-black uppercase px-1 py-0.2 rounded shadow-xs leading-tight">
-            ★
+          <div className="absolute top-1 left-1 bg-[#D4A94E] text-[#1B0F0A] text-[9px] font-black uppercase px-1.5 py-0.5 rounded shadow-sm leading-tight flex items-center gap-0.5">
+            ★ Top
           </div>
         )}
 
@@ -79,7 +79,7 @@ export const ItemCard: React.FC<ItemCardProps> = ({
             className="absolute bottom-1 right-1 bg-[#1B0F0A]/90 backdrop-blur-xs text-[#EFEBE9] p-0.5 rounded border border-[#5D4037]"
             title="Spiced / Seasoned"
           >
-            <Flame className="w-2.5 h-2.5 text-amber-500" />
+            <Flame className="w-3 h-3 text-amber-500" />
           </div>
         )}
       </div>
@@ -93,7 +93,7 @@ export const ItemCard: React.FC<ItemCardProps> = ({
 
           {/* Price in Ethiopian Birr ONLY */}
           <div className="text-right shrink-0">
-            <span className="text-sm sm:text-base font-bold text-[#D4A94E] tabular-nums whitespace-nowrap tracking-tight">
+            <span className="inline-flex items-center px-2 py-0.5 rounded-lg bg-[#D4A94E]/10 border border-[#D4A94E]/30 text-sm sm:text-base font-bold text-[#E2B859] tabular-nums whitespace-nowrap tracking-tight group-hover:bg-[#D4A94E]/20 transition-colors">
               {formatBirr(item.price)}
             </span>
           </div>
@@ -106,12 +106,11 @@ export const ItemCard: React.FC<ItemCardProps> = ({
         {/* Portion / Sizes pill or serving hours */}
         <div className="flex items-center gap-2 text-[10px] text-[#A1887F]">
           {item.sizes && item.sizes.length > 0 ? (
-            <div className="flex items-center gap-1">
-              <span className="text-[9px] text-[#8D6E63] uppercase">Sizes:</span>
+            <div className="flex items-center gap-1.5">
+              <span className="text-[9px] text-[#8D6E63] uppercase font-semibold">Sizes:</span>
               {item.sizes.map((s, idx) => (
-                <span key={s.name} className="text-[#EFEBE9] text-[9px] font-medium">
-                  {s.name[0]}: <span className="text-[#D4A94E]">{s.price}B</span>
-                  {idx < item.sizes!.length - 1 ? ' ·' : ''}
+                <span key={s.name} className="text-[#EFEBE9] text-[9px] font-medium bg-[#1B0F0A] px-1.5 py-0.5 rounded border border-[#3E2723]">
+                  {s.name[0]}: <span className="text-[#D4A94E] font-bold">{s.price}B</span>
                 </span>
               ))}
             </div>

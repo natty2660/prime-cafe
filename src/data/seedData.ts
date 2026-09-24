@@ -114,11 +114,20 @@ export const SEED_CATEGORIES: Category[] = [
   },
 ];
 
-// Reusable standard international food assets
+// Reusable precise beverage and food photo assets
 const ASSET_ICE_CREAM = '/assets/images/artisan_ice_cream_1790216736113.jpg';
 const ASSET_BURGER = '/assets/images/gourmet_burger_fries_1790216748392.jpg';
-const ASSET_COFFEE = '/assets/images/prime_cafe_macchiato_1790215844194.jpg';
-const ASSET_DRINK = '/assets/images/refreshing_mojito_cocktail_1790216759973.jpg';
+const ASSET_MACCHIATO = '/assets/images/prime_cafe_macchiato_1790215844194.jpg';
+const ASSET_ICED_LATTE = '/assets/images/iced_latte_glass_1790235076500.jpg';
+const ASSET_SPANISH_LATTE = '/assets/images/iced_spanish_latte_1790235097521.jpg';
+const ASSET_CAPPUCCINO = '/assets/images/artisan_cappuccino_1790235086488.jpg';
+const ASSET_MOJITO = '/assets/images/refreshing_mojito_cocktail_1790216759973.jpg';
+const ASSET_JUICE = '/assets/images/fresh_fruit_juice_1790235112270.jpg';
+const ASSET_MILKSHAKE = '/assets/images/gourmet_milkshake_1790235124208.jpg';
+const ASSET_FUUL = '/assets/images/prime_cafe_fuul_1790215834088.jpg';
+const ASSET_DIBS = '/assets/images/prime_cafe_dibs_1790215853921.jpg';
+const ASSET_COFFEE = ASSET_MACCHIATO;
+const ASSET_DRINK = ASSET_MOJITO;
 
 export const SEED_MENU_ITEMS: MenuItem[] = [
   // ==========================================
@@ -649,7 +658,7 @@ export const SEED_MENU_ITEMS: MenuItem[] = [
     name: 'Macchiato',
     description: 'Rich dark espresso marked with velvety steamed micro-foam milk.',
     price: 100,
-    image_url: ASSET_COFFEE,
+    image_url: ASSET_MACCHIATO,
     is_available: true,
     display_order: 1,
     is_popular: true,
@@ -663,7 +672,7 @@ export const SEED_MENU_ITEMS: MenuItem[] = [
     name: 'Double Macchiato',
     description: 'Double shot of bold espresso balanced with rich warm foam.',
     price: 150,
-    image_url: ASSET_COFFEE,
+    image_url: ASSET_MACCHIATO,
     is_available: true,
     display_order: 2,
     created_at: new Date().toISOString(),
@@ -676,7 +685,7 @@ export const SEED_MENU_ITEMS: MenuItem[] = [
     name: 'Iced Latte',
     description: 'Smooth espresso poured over chilled whole milk and crystal ice.',
     price: 280,
-    image_url: ASSET_COFFEE,
+    image_url: ASSET_ICED_LATTE,
     is_available: true,
     display_order: 3,
     created_at: new Date().toISOString(),
@@ -689,7 +698,7 @@ export const SEED_MENU_ITEMS: MenuItem[] = [
     name: 'Iced Americano',
     description: 'Crisp double espresso stretched over chilled water and ice for clean refreshment.',
     price: 180,
-    image_url: ASSET_COFFEE,
+    image_url: ASSET_ICED_LATTE,
     is_available: true,
     display_order: 4,
     created_at: new Date().toISOString(),
@@ -702,7 +711,7 @@ export const SEED_MENU_ITEMS: MenuItem[] = [
     name: 'Iced Spanish Latte',
     description: 'Chilled espresso combined with sweetened condensed milk and cold fresh milk over ice.',
     price: 350,
-    image_url: ASSET_COFFEE,
+    image_url: ASSET_SPANISH_LATTE,
     is_available: true,
     display_order: 5,
     is_popular: true,
@@ -716,7 +725,7 @@ export const SEED_MENU_ITEMS: MenuItem[] = [
     name: 'Iced Mocha Latte',
     description: 'Chilled espresso infused with rich cocoa syrup, cold milk, and ice.',
     price: 350,
-    image_url: ASSET_COFFEE,
+    image_url: ASSET_SPANISH_LATTE,
     is_available: true,
     display_order: 6,
     created_at: new Date().toISOString(),
@@ -729,7 +738,7 @@ export const SEED_MENU_ITEMS: MenuItem[] = [
     name: 'Cappuccino',
     description: 'Equal parts bold espresso, steamed silky milk, and deep thick froth with cocoa dusting.',
     price: 150,
-    image_url: ASSET_COFFEE,
+    image_url: ASSET_CAPPUCCINO,
     is_available: true,
     display_order: 7,
     created_at: new Date().toISOString(),
@@ -742,7 +751,7 @@ export const SEED_MENU_ITEMS: MenuItem[] = [
     name: 'Hot Chocolate',
     description: 'Warm, melted rich Dutch chocolate whisked with creamy steamed milk.',
     price: 150,
-    image_url: ASSET_COFFEE,
+    image_url: ASSET_CAPPUCCINO,
     is_available: true,
     display_order: 8,
     created_at: new Date().toISOString(),
@@ -855,7 +864,7 @@ export const SEED_MENU_ITEMS: MenuItem[] = [
     name: 'Oreo Milkshake (Orea)',
     description: 'Thick vanilla gelato blended with whole Oreo biscuits, topped with whipped cream.',
     price: 650,
-    image_url: ASSET_DRINK,
+    image_url: ASSET_MILKSHAKE,
     is_available: true,
     display_order: 1,
     is_popular: true,
@@ -869,7 +878,7 @@ export const SEED_MENU_ITEMS: MenuItem[] = [
     name: 'Vanilla Milkshake',
     description: 'Classic velvety vanilla bean ice cream spun with whole fresh milk.',
     price: 650,
-    image_url: ASSET_DRINK,
+    image_url: ASSET_MILKSHAKE,
     is_available: true,
     display_order: 2,
     created_at: new Date().toISOString(),
@@ -882,7 +891,7 @@ export const SEED_MENU_ITEMS: MenuItem[] = [
     name: 'Strawberry Milkshake',
     description: 'Real strawberry cream blended into a luscious, sweet chilled shake.',
     price: 650,
-    image_url: ASSET_DRINK,
+    image_url: ASSET_MILKSHAKE,
     is_available: true,
     display_order: 3,
     created_at: new Date().toISOString(),
@@ -895,7 +904,7 @@ export const SEED_MENU_ITEMS: MenuItem[] = [
     name: 'Chocolate Milkshake',
     description: 'Rich dark chocolate gelato blended with chocolate drizzle and cold milk.',
     price: 650,
-    image_url: ASSET_DRINK,
+    image_url: ASSET_MILKSHAKE,
     is_available: true,
     display_order: 4,
     created_at: new Date().toISOString(),
@@ -908,7 +917,7 @@ export const SEED_MENU_ITEMS: MenuItem[] = [
     name: 'Lotus Biscoff Milkshake',
     description: 'Indulgent Lotus speculoos spread blended with sweet vanilla cream and cookie crumble.',
     price: 650,
-    image_url: ASSET_DRINK,
+    image_url: ASSET_MILKSHAKE,
     is_available: true,
     display_order: 5,
     is_popular: true,
@@ -996,7 +1005,7 @@ export const SEED_MENU_ITEMS: MenuItem[] = [
     name: 'Fresh Orange Juice',
     description: '100% pure cold-squeezed sun-ripened oranges, no added water or sugar.',
     price: 350,
-    image_url: ASSET_DRINK,
+    image_url: ASSET_JUICE,
     is_available: true,
     display_order: 1,
     is_popular: true,
@@ -1010,7 +1019,7 @@ export const SEED_MENU_ITEMS: MenuItem[] = [
     name: 'Papaya Juice',
     description: 'Thick, creamy chilled papaya smoothie with fresh lime squeeze.',
     price: 200,
-    image_url: ASSET_DRINK,
+    image_url: ASSET_JUICE,
     is_available: true,
     display_order: 2,
     created_at: new Date().toISOString(),
@@ -1023,7 +1032,7 @@ export const SEED_MENU_ITEMS: MenuItem[] = [
     name: 'Avocado Juice Special',
     description: 'Thick buttery whipped avocado purée topped with lime and Vimto swirl.',
     price: 200,
-    image_url: ASSET_DRINK,
+    image_url: ASSET_JUICE,
     is_available: true,
     display_order: 3,
     is_popular: true,
@@ -1037,7 +1046,7 @@ export const SEED_MENU_ITEMS: MenuItem[] = [
     name: 'Mango Juice',
     description: 'Sweet, tropical crushed mango nectar served chilled.',
     price: 250,
-    image_url: ASSET_DRINK,
+    image_url: ASSET_JUICE,
     is_available: true,
     display_order: 4,
     created_at: new Date().toISOString(),
@@ -1050,7 +1059,7 @@ export const SEED_MENU_ITEMS: MenuItem[] = [
     name: 'Banana Shake',
     description: 'Creamy chilled blend of fresh ripe bananas, cold milk, and natural sweetness.',
     price: 300,
-    image_url: ASSET_DRINK,
+    image_url: ASSET_JUICE,
     is_available: true,
     display_order: 5,
     is_popular: true,
