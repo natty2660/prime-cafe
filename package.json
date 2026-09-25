@@ -5,13 +5,14 @@
   "type": "module",
   "scripts": {
     "dev": "tsx server.ts",
-    "prebuild": "node update-unique-images.cjs",
-    "build": "node update-unique-images.cjs && vite build",
+    "prebuild": "node update-unique-images.cjs && node scripts/optimize-images.cjs",
+    "build": "node update-unique-images.cjs && node scripts/optimize-images.cjs && vite build",
     "start": "node server.ts",
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",
     "lint": "tsc --noEmit",
-    "audit:images": "node scripts/audit-images.cjs"
+    "audit:images": "node scripts/audit-images.cjs",
+    "optimize:images": "node scripts/optimize-images.cjs"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",

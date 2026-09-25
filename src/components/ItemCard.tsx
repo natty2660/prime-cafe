@@ -69,6 +69,7 @@ export const ItemCard: React.FC<ItemCardProps> = ({
             src={currentSrc}
             alt={item.name}
             loading="lazy"
+            decoding="async"
             referrerPolicy="no-referrer"
             onError={handleImageError}
             className={`w-full h-full object-cover transition-transform duration-300 group-hover:scale-110 ${

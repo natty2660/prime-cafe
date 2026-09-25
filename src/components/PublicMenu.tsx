@@ -176,6 +176,8 @@ export const PublicMenu: React.FC<PublicMenuProps> = ({
           <img
             src="/assets/images/prime_cafe_wall_logo_1790230397113.jpg"
             alt="Prime Cafe Wall with Logo"
+            fetchPriority="high"
+            decoding="async"
             className="w-full h-full object-cover opacity-75"
             onError={(e) => {
               (e.target as HTMLImageElement).src = '/assets/images/prime_cafe_luxury_bg_1790216722377.jpg';
@@ -417,6 +419,7 @@ export const PublicMenu: React.FC<PublicMenuProps> = ({
                 <img
                   src={selectedItem.image_url}
                   alt={selectedItem.name}
+                  decoding="async"
                   referrerPolicy="no-referrer"
                   onError={(e) => {
                     const alt = getAlternativeImageUrl(selectedItem.image_url);
