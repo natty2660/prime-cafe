@@ -88,11 +88,11 @@ function runTests() {
   assert(Boolean(primeRoyal), 'Prime Royal Dish exists');
   assert(primeRoyal?.price === 1300, `Prime Royal Dish is 1,300 Birr (found ${primeRoyal?.price})`);
 
-  // TEST 4: Photo Rules Discipline (International vs Local Blank)
+  // TEST 4: Photo Rules Discipline (All items have valid photography)
   const localItems = SEED_MENU_ITEMS.filter((i) => i.is_local_specialty);
   assert(
-    localItems.every((i) => i.image_url === ''),
-    'Strict discipline: All local specialty items have blank image_url (never guessed randomly)'
+    localItems.every((i) => typeof i.image_url === 'string' && i.image_url.startsWith('/assets/images/')),
+    'Strict discipline: All local specialty items have verified photography from local assets'
   );
   assert(
     iceCreamItems.every((i) => i.image_url !== ''),
