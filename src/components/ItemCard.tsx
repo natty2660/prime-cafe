@@ -30,10 +30,12 @@ export const ItemCard: React.FC<ItemCardProps> = ({
       setTriedFallback(true);
       const alt = getAlternativeImageUrl(currentSrc);
       if (alt && alt !== currentSrc) {
+        console.warn(`[ImageLoad] Primary image failed for "${item.name}": ${currentSrc} -> trying alternative: ${alt}`);
         setCurrentSrc(alt);
         return;
       }
     }
+    console.error(`[ImageLoad] Image permanently failed to load for "${item.name}" (ID: ${item.id}). Request URL: ${currentSrc}`);
     setImageFailed(true);
   };
 
@@ -130,9 +132,9 @@ export const ItemCard: React.FC<ItemCardProps> = ({
           {item.sizes && item.sizes.length > 0 ? (
             <div className="flex items-center gap-1.5">
               <span className="text-[9px] text-[#8D6E63] uppercase font-semibold">Sizes:</span>
-              {item.sizes.map((s, idx) => (
+              {item.sizes.map((s) => (
                 <span key={s.name} className="text-[#EFEBE9] text-[9px] font-medium bg-[#1B0F0A] px-1.5 py-0.5 rounded border border-[#3E2723]">
-                  {s.name[0]}: <span className="text-[#D4A94E] font-bold">{s.price}B</span>
+                  {s.name[0]}: <span className="text-[#D4A94E] font-bold">{formatBirr(s.price)}</span>
                 </span>
               ))}
             </div>
