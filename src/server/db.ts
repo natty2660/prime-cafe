@@ -34,10 +34,19 @@ function getDatabaseFilePath(): string {
   if (process.env.DB_PATH && !process.env.DB_PATH.startsWith('postgres')) {
     return process.env.DB_PATH;
   }
+  const bundledPath = path.join(process.cwd(), 'data', 'prime_cafe_db.json');
   if (process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME) {
-    return '/tmp/prime_cafe_db.json';
+    const tmpPath = '/tmp/prime_cafe_db.json';
+    if (!fs.existsSync(tmpPath) && fs.existsSync(bundledPath)) {
+      try {
+        fs.copyFileSync(bundledPath, tmpPath);
+      } catch (err) {
+        console.warn('Could not copy bundled DB to /tmp:', err);
+      }
+    }
+    return fs.existsSync(tmpPath) ? tmpPath : bundledPath;
   }
-  return path.join(process.cwd(), 'data', 'prime_cafe_db.json');
+  return bundledPath;
 }
 
 let inMemoryState: DatabaseState | null = null;

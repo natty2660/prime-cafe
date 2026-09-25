@@ -3,6 +3,7 @@ import { Restaurant, Category, MenuItem, MealTime } from '../types/index.ts';
 import { BrandLogo } from './BrandLogo.tsx';
 import { ItemCard } from './ItemCard.tsx';
 import { formatBirr, getSuggestedMealTime } from '../lib/storage.ts';
+import { getAlternativeImageUrl } from '../lib/imageFallback.ts';
 import {
   Search,
   Clock,
@@ -417,6 +418,12 @@ export const PublicMenu: React.FC<PublicMenuProps> = ({
                   src={selectedItem.image_url}
                   alt={selectedItem.name}
                   referrerPolicy="no-referrer"
+                  onError={(e) => {
+                    const alt = getAlternativeImageUrl(selectedItem.image_url);
+                    if (alt && (e.currentTarget as HTMLImageElement).src !== alt) {
+                      (e.currentTarget as HTMLImageElement).src = alt;
+                    }
+                  }}
                   className="w-full h-full object-cover"
                 />
                 <button

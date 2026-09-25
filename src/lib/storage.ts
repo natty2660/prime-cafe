@@ -1,7 +1,7 @@
 import { Restaurant, Category, MenuItem, MenuResponse, MealTime } from '../types/index.ts';
 import { PRIME_CAFE_RESTAURANT, SEED_CATEGORIES, SEED_MENU_ITEMS } from '../data/seedData.ts';
 
-const STORAGE_KEY = 'prime_cafe_store_v11';
+const STORAGE_KEY = 'prime_cafe_store_v13';
 
 export interface DatabaseState {
   restaurant: Restaurant;
@@ -38,6 +38,24 @@ export function loadClientState(): DatabaseState {
       saveClientState(initial);
       return initial;
     }
+
+    // Always reconcile cached items with latest verified seed images to prevent broken local caches on Vercel
+    const seedMap = new Map(SEED_MENU_ITEMS.map((item) => [item.id, item]));
+    let needsUpdate = false;
+
+    parsed.items = parsed.items.map((item) => {
+      const seedItem = seedMap.get(item.id);
+      if (seedItem && seedItem.image_url && item.image_url !== seedItem.image_url) {
+        needsUpdate = true;
+        return { ...item, image_url: seedItem.image_url };
+      }
+      return item;
+    });
+
+    if (needsUpdate) {
+      saveClientState(parsed);
+    }
+
     return parsed;
   } catch (e) {
     console.warn('Failed reading client state, using fallback:', e);

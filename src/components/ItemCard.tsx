@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { MenuItem } from '../types/index.ts';
 import { formatBirr } from '../lib/storage.ts';
+import { getAlternativeImageUrl } from '../lib/imageFallback.ts';
 import { Flame, Clock, Coffee, UtensilsCrossed, Camera, Sparkles } from 'lucide-react';
 
 interface ItemCardProps {
@@ -14,13 +15,29 @@ export const ItemCard: React.FC<ItemCardProps> = ({
   onClick,
   isOutsideServingHours = false,
 }) => {
+  const [currentSrc, setCurrentSrc] = useState(item.image_url);
+  const [triedFallback, setTriedFallback] = useState(false);
   const [imageFailed, setImageFailed] = useState(false);
 
   useEffect(() => {
+    setCurrentSrc(item.image_url);
+    setTriedFallback(false);
     setImageFailed(false);
   }, [item.image_url]);
 
-  const hasValidPhoto = Boolean(item.image_url && item.image_url.trim() !== '' && !imageFailed);
+  const handleImageError = () => {
+    if (!triedFallback) {
+      setTriedFallback(true);
+      const alt = getAlternativeImageUrl(currentSrc);
+      if (alt && alt !== currentSrc) {
+        setCurrentSrc(alt);
+        return;
+      }
+    }
+    setImageFailed(true);
+  };
+
+  const hasValidPhoto = Boolean(currentSrc && currentSrc.trim() !== '' && !imageFailed);
 
   return (
     <div
@@ -47,11 +64,11 @@ export const ItemCard: React.FC<ItemCardProps> = ({
       <div className="relative w-16 h-16 sm:w-20 sm:h-20 shrink-0 rounded-xl overflow-hidden bg-[#1B0F0A] border border-[#5D4037]/80 group-hover:border-[#D4A94E]/90 shadow-sm transition-all duration-200">
         {hasValidPhoto ? (
           <img
-            src={item.image_url}
+            src={currentSrc}
             alt={item.name}
             loading="lazy"
             referrerPolicy="no-referrer"
-            onError={() => setImageFailed(true)}
+            onError={handleImageError}
             className={`w-full h-full object-cover transition-transform duration-300 group-hover:scale-110 ${
               !item.is_available ? 'grayscale contrast-75' : ''
             }`}
