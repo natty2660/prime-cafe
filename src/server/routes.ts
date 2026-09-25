@@ -363,8 +363,16 @@ apiRouter.post('/upload-dish-photo', requireAdmin, (req: Request, res: Response)
       .replace(/^_|_$/g, '');
     const outFileName = `original_${safeSlug}.${ext}`;
     const targetPath = path.join(process.cwd(), 'public', 'assets', 'images', outFileName);
-
     fs.writeFileSync(targetPath, buffer);
+
+    const srcCopyPath = path.join(process.cwd(), 'src', 'assets', 'images', outFileName);
+    try {
+      if (fs.existsSync(path.dirname(srcCopyPath))) {
+        fs.writeFileSync(srcCopyPath, buffer);
+      }
+    } catch {
+      // Ignore if src does not exist in production build
+    }
 
     const publicUrl = `/assets/images/${outFileName}`;
     const db = getDatabase();

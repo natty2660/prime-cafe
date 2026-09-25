@@ -1,7 +1,7 @@
 import { Restaurant, Category, MenuItem, MenuResponse, MealTime } from '../types/index.ts';
 import { PRIME_CAFE_RESTAURANT, SEED_CATEGORIES, SEED_MENU_ITEMS } from '../data/seedData.ts';
 
-const STORAGE_KEY = 'prime_cafe_store_v8';
+const STORAGE_KEY = 'prime_cafe_store_v9';
 
 export interface DatabaseState {
   restaurant: Restaurant;

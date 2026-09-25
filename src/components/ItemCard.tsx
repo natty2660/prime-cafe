@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { MenuItem } from '../types/index.ts';
 import { formatBirr } from '../lib/storage.ts';
 import { Flame, Clock, Coffee, UtensilsCrossed, Camera, Sparkles } from 'lucide-react';
@@ -15,6 +15,11 @@ export const ItemCard: React.FC<ItemCardProps> = ({
   isOutsideServingHours = false,
 }) => {
   const [imageFailed, setImageFailed] = useState(false);
+
+  useEffect(() => {
+    setImageFailed(false);
+  }, [item.image_url]);
+
   const hasValidPhoto = Boolean(item.image_url && item.image_url.trim() !== '' && !imageFailed);
 
   return (
