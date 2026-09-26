@@ -44,17 +44,21 @@ function runTests() {
   const iceCreamCategory = SEED_CATEGORIES.find((c) => c.meal_time === 'ice_cream');
   const drinksCategories = SEED_CATEGORIES.filter((c) => c.meal_time === 'drinks');
   const breakfastCategory = SEED_CATEGORIES.find((c) => c.meal_time === 'breakfast');
-  const lunchDinnerCategories = SEED_CATEGORIES.filter((c) => c.meal_time === 'lunch_dinner');
+  const casariyoCategory = SEED_CATEGORIES.find((c) => c.meal_time === 'casariyo');
+  const dinnerCategories = SEED_CATEGORIES.filter((c) => c.meal_time === 'dinner' || c.meal_time === 'lunch_dinner');
 
   assert(Boolean(iceCreamCategory), 'Ice Cream category exists as first-class category (display_order 1)');
   assert(iceCreamCategory?.display_order === 1, 'Ice cream is ordered first');
   assert(drinksCategories.length === 5, 'All 5 drink categories grouped under Drinks (display_orders 2-6)');
   assert(Boolean(breakfastCategory), 'Breakfast category exists (display_order 7)');
-  assert(lunchDinnerCategories.length === 3, 'Lunch and Dinner merged into one meal section (display_orders 8-10)');
+  assert(Boolean(casariyoCategory), 'Casariyo category exists between Breakfast and Dinner (display_order 8)');
+  assert(casariyoCategory?.display_order === 8, 'Casariyo is ordered at position 8');
+  assert(dinnerCategories.length === 3, 'Dinner meal section contains 3 categories (display_orders 9-11)');
 
   const breakfastItems = SEED_MENU_ITEMS.filter((i) => i.category_id === 'cat_breakfast');
-  const lunchDinnerTotal = SEED_MENU_ITEMS.filter((i) =>
-    lunchDinnerCategories.some((c) => c.id === i.category_id)
+  const casariyoItems = SEED_MENU_ITEMS.filter((i) => i.category_id === 'cat_casariyo');
+  const dinnerTotal = SEED_MENU_ITEMS.filter((i) =>
+    dinnerCategories.some((c) => c.id === i.category_id)
   );
   const iceCreamItems = SEED_MENU_ITEMS.filter((i) => i.category_id === 'cat_ice_cream');
   const coffeeItems = SEED_MENU_ITEMS.filter((i) => i.category_id === 'cat_hot_cold_coffee');
@@ -63,8 +67,15 @@ function runTests() {
   const mojitoItems = SEED_MENU_ITEMS.filter((i) => i.category_id === 'cat_mojito');
   const milkshakeItems = SEED_MENU_ITEMS.filter((i) => i.category_id === 'cat_milkshake');
 
-  assert(breakfastItems.length === 9, `Breakfast section contains exactly 9 printed items (${breakfastItems.length} found)`);
-  assert(lunchDinnerTotal.length === 17, `Merged Lunch & Dinner contains all 17 printed dishes (${lunchDinnerTotal.length} found)`);
+  assert(breakfastItems.length === 6, `Breakfast section contains exactly 6 morning dishes (${breakfastItems.length} found)`);
+  assert(casariyoItems.length === 5, `Casariyo section contains exactly 5 items (${casariyoItems.length} found)`);
+  assert(casariyoItems.some((i) => i.name === 'Keks'), 'Keks listed under Casariyo');
+  assert(casariyoItems.some((i) => i.name === 'Sambuus'), 'Sambuus listed under Casariyo');
+  assert(casariyoItems.some((i) => i.name === 'Mulawah'), 'Mulawah listed under Casariyo');
+  assert(casariyoItems.some((i) => i.name === 'Cambaabur'), 'Cambaabur listed under Casariyo');
+  assert(casariyoItems.some((i) => i.name.includes('Chips')), 'Chips listed under Casariyo');
+  assert(dinnerTotal.length === 15, `Dinner contains all 15 evening dishes (${dinnerTotal.length} found)`);
+  assert(SEED_MENU_ITEMS.length === 62, `Total menu count remains exactly 62 dishes (${SEED_MENU_ITEMS.length} found)`);
   assert(coffeeItems.length === 8, `Hot & Cold Coffee contains 8 items (${coffeeItems.length} found)`);
   assert(teaItems.length === 5, `Special Teas contains 5 items (${teaItems.length} found)`);
   assert(juiceItems.length === 5, `Fresh Juices & Shakes contains 5 items (${juiceItems.length} found)`);

@@ -3,6 +3,7 @@ export type MealTime =
   | 'ice_cream'
   | 'drinks'
   | 'breakfast'
+  | 'casariyo'
   | 'lunch_dinner'
   | 'lunch'
   | 'dinner'

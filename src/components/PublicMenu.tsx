@@ -16,6 +16,7 @@ import {
   Sparkles,
   IceCream,
   Coffee,
+  Cookie,
   Camera,
   Navigation,
   UtensilsCrossed,
@@ -75,12 +76,14 @@ export const PublicMenu: React.FC<PublicMenuProps> = ({
         list = categories.filter((c) => c.meal_time === 'drinks' || c.meal_time === 'all_day');
       } else if (selectedMealTime === 'breakfast') {
         list = categories.filter((c) => c.meal_time === 'breakfast');
-      } else if (selectedMealTime === 'lunch_dinner' || selectedMealTime === 'lunch' || selectedMealTime === 'dinner') {
+      } else if (selectedMealTime === 'casariyo') {
+        list = categories.filter((c) => c.meal_time === 'casariyo' || c.id === 'cat_casariyo');
+      } else if (selectedMealTime === 'dinner' || selectedMealTime === 'lunch_dinner' || selectedMealTime === 'lunch') {
         list = categories.filter(
           (c) =>
+            c.meal_time === 'dinner' ||
             c.meal_time === 'lunch_dinner' ||
             c.meal_time === 'lunch' ||
-            c.meal_time === 'dinner' ||
             c.id === 'cat_lunch_mains' ||
             c.id === 'cat_pasta' ||
             c.id === 'cat_dinner_specialties'
@@ -116,18 +119,20 @@ export const PublicMenu: React.FC<PublicMenuProps> = ({
     return map;
   }, [filteredCategories, items, searchQuery]);
 
-  // Main Categories tabs arranged in user requested sequence:
+  // Main Categories tabs arranged in sequence:
   // 1. Full Menu
   // 2. Ice Cream
   // 3. Drinks
   // 4. Breakfast
-  // 5. Lunch & Dinner (merged at one)
+  // 5. Casariyo (Afternoon snacks, chips & quick bites)
+  // 6. Dinner (Mains, fast food & pasta)
   const mealTimeTabs = [
     { id: 'all', label: 'Full Menu', sub: 'Everything', icon: Sparkles },
     { id: 'ice_cream', label: 'Ice Cream', sub: 'Artisan Gelato', icon: IceCream },
     { id: 'drinks', label: 'Drinks', sub: 'Coffee, Juices & Mojitos', icon: Coffee },
     { id: 'breakfast', label: 'Breakfast', sub: '8:30 AM – 12 PM', icon: null },
-    { id: 'lunch_dinner', label: 'Lunch & Dinner', sub: 'Mains & Fast Food', icon: UtensilsCrossed },
+    { id: 'casariyo', label: 'Casariyo', sub: 'Snacks & Chips', icon: Cookie },
+    { id: 'dinner', label: 'Dinner', sub: 'Mains & Chef Specials', icon: UtensilsCrossed },
   ] as const;
 
   const currentDisplayPrice = useMemo(() => {
@@ -367,8 +372,10 @@ export const PublicMenu: React.FC<PublicMenuProps> = ({
                         ? 'Gelateria'
                         : category.meal_time === 'drinks' || category.meal_time === 'all_day'
                         ? 'Drinks'
-                        : category.meal_time === 'lunch_dinner' || category.meal_time === 'lunch' || category.meal_time === 'dinner'
-                        ? 'Lunch & Dinner'
+                        : category.meal_time === 'casariyo'
+                        ? 'Casariyo'
+                        : category.meal_time === 'dinner' || category.meal_time === 'lunch_dinner' || category.meal_time === 'lunch'
+                        ? 'Dinner'
                         : category.meal_time}
                     </span>
                   </div>

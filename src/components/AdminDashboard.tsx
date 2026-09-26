@@ -1918,7 +1918,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   <option value="ice_cream">Ice Cream (Artisan Gelateria)</option>
                   <option value="drinks">Drinks (Coffee, Teas, Juices, Mojitos, Shakes)</option>
                   <option value="breakfast">Breakfast (Morning)</option>
-                  <option value="lunch_dinner">Lunch & Dinner (Merged Fast Food, Pasta & Mains)</option>
+                  <option value="casariyo">Casariyo (Afternoon Snacks & Chips)</option>
+                  <option value="dinner">Dinner (Fast Food, Pasta & Mains)</option>
                   <option value="all_day">All Day</option>
                 </select>
               </div>

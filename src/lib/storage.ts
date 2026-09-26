@@ -1,7 +1,7 @@
 import { Restaurant, Category, MenuItem, MenuResponse, MealTime } from '../types/index.ts';
 import { PRIME_CAFE_RESTAURANT, SEED_CATEGORIES, SEED_MENU_ITEMS } from '../data/seedData.ts';
 
-const STORAGE_KEY = 'prime_cafe_store_v13';
+const STORAGE_KEY = 'prime_cafe_store_v15';
 
 export interface DatabaseState {
   restaurant: Restaurant;
@@ -39,15 +39,24 @@ export function loadClientState(): DatabaseState {
       return initial;
     }
 
-    // Always reconcile cached items with latest verified seed images to prevent broken local caches on Vercel
+    // Always reconcile cached items with latest verified seed images and category mapping
     const seedMap = new Map(SEED_MENU_ITEMS.map((item) => [item.id, item]));
     let needsUpdate = false;
 
+    // Ensure Casariyo category exists in categories
+    const hasCasariyo = parsed.categories.some((c) => c.id === 'cat_casariyo');
+    if (!hasCasariyo || parsed.categories.length !== SEED_CATEGORIES.length) {
+      parsed.categories = [...SEED_CATEGORIES];
+      needsUpdate = true;
+    }
+
     parsed.items = parsed.items.map((item) => {
       const seedItem = seedMap.get(item.id);
-      if (seedItem && seedItem.image_url && item.image_url !== seedItem.image_url) {
-        needsUpdate = true;
-        return { ...item, image_url: seedItem.image_url };
+      if (seedItem) {
+        if (item.category_id !== seedItem.category_id || (seedItem.image_url && item.image_url !== seedItem.image_url)) {
+          needsUpdate = true;
+          return { ...item, category_id: seedItem.category_id, image_url: seedItem.image_url || item.image_url };
+        }
       }
       return item;
     });
