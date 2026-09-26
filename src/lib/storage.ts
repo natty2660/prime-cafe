@@ -20,6 +20,50 @@ export function getInitialState(): DatabaseState {
   };
 }
 
+/**
+ * Robust reconciliation engine that guarantees categories (including Casariyo)
+ * and items (Keks, Sambuus, Mulawah, Cambaabur, Chips) are properly mapped,
+ * while preserving any user-modified prices from admin edits.
+ */
+export function reconcileDatabaseState(state: DatabaseState): DatabaseState {
+  const fresh = getInitialState();
+  const seedItemMap = new Map(SEED_MENU_ITEMS.map((item) => [item.id, item]));
+
+  // Ensure categories always match the definitive sequence including Casariyo
+  const categories = [...SEED_CATEGORIES];
+
+  const existingItems = Array.isArray(state?.items) ? state.items : [];
+  const existingMap = new Map(existingItems.map((item) => [item.id, item]));
+
+  const items = SEED_MENU_ITEMS.map((seedItem) => {
+    const existing = existingMap.get(seedItem.id);
+    if (existing) {
+      return {
+        ...seedItem,
+        price: typeof existing.price === 'number' && existing.price > 0 ? existing.price : seedItem.price,
+        is_available: existing.is_available !== undefined ? existing.is_available : seedItem.is_available,
+        is_popular: existing.is_popular !== undefined ? existing.is_popular : seedItem.is_popular,
+        image_url: seedItem.image_url || existing.image_url,
+      };
+    }
+    return { ...seedItem };
+  });
+
+  return {
+    restaurant: {
+      ...fresh.restaurant,
+      ...(state?.restaurant || {}),
+      address: 'Jijiga, Ethiopia',
+      opening_hours: '8:30 AM – 10:00 PM Daily',
+      wifi_available: false,
+    },
+    categories,
+    items,
+    last_updated: state?.last_updated || new Date().toISOString(),
+    admin_password: state?.admin_password,
+  };
+}
+
 export function loadClientState(): DatabaseState {
   if (typeof window === 'undefined') {
     return getInitialState();
@@ -33,39 +77,9 @@ export function loadClientState(): DatabaseState {
       return initial;
     }
     const parsed = JSON.parse(raw) as DatabaseState;
-    if (!parsed.restaurant || !Array.isArray(parsed.categories) || !Array.isArray(parsed.items)) {
-      const initial = getInitialState();
-      saveClientState(initial);
-      return initial;
-    }
-
-    // Always reconcile cached items with latest verified seed images and category mapping
-    const seedMap = new Map(SEED_MENU_ITEMS.map((item) => [item.id, item]));
-    let needsUpdate = false;
-
-    // Ensure Casariyo category exists in categories
-    const hasCasariyo = parsed.categories.some((c) => c.id === 'cat_casariyo');
-    if (!hasCasariyo || parsed.categories.length !== SEED_CATEGORIES.length) {
-      parsed.categories = [...SEED_CATEGORIES];
-      needsUpdate = true;
-    }
-
-    parsed.items = parsed.items.map((item) => {
-      const seedItem = seedMap.get(item.id);
-      if (seedItem) {
-        if (item.category_id !== seedItem.category_id || (seedItem.image_url && item.image_url !== seedItem.image_url)) {
-          needsUpdate = true;
-          return { ...item, category_id: seedItem.category_id, image_url: seedItem.image_url || item.image_url };
-        }
-      }
-      return item;
-    });
-
-    if (needsUpdate) {
-      saveClientState(parsed);
-    }
-
-    return parsed;
+    const reconciled = reconcileDatabaseState(parsed);
+    saveClientState(reconciled);
+    return reconciled;
   } catch (e) {
     console.warn('Failed reading client state, using fallback:', e);
     return getInitialState();
@@ -113,18 +127,19 @@ export function getSuggestedMealTime(_date = new Date()): MealTime {
 
 // Generate menu response for a given slug
 export function buildMenuResponse(state: DatabaseState, slug = 'prime-cafe'): MenuResponse | null {
-  if (state.restaurant.slug !== slug) {
+  const reconciled = reconcileDatabaseState(state);
+  if (reconciled.restaurant.slug !== slug) {
     return null;
   }
 
   // Sort categories by display_order
-  const sortedCategories = [...state.categories].sort((a, b) => a.display_order - b.display_order);
+  const sortedCategories = [...reconciled.categories].sort((a, b) => a.display_order - b.display_order);
 
   // Sort items by display_order
-  const sortedItems = [...state.items].sort((a, b) => a.display_order - b.display_order);
+  const sortedItems = [...reconciled.items].sort((a, b) => a.display_order - b.display_order);
 
   return {
-    restaurant: state.restaurant,
+    restaurant: reconciled.restaurant,
     categories: sortedCategories,
     items: sortedItems,
     generated_at: new Date().toISOString(),

@@ -78,6 +78,19 @@ export const PublicMenu: React.FC<PublicMenuProps> = ({
         list = categories.filter((c) => c.meal_time === 'breakfast');
       } else if (selectedMealTime === 'casariyo') {
         list = categories.filter((c) => c.meal_time === 'casariyo' || c.id === 'cat_casariyo');
+        if (list.length === 0) {
+          list = [
+            {
+              id: 'cat_casariyo',
+              restaurant_id: restaurant.id,
+              name: 'Casariyo',
+              meal_time: 'casariyo',
+              display_order: 8,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+            },
+          ];
+        }
       } else if (selectedMealTime === 'dinner' || selectedMealTime === 'lunch_dinner' || selectedMealTime === 'lunch') {
         list = categories.filter(
           (c) =>
@@ -91,16 +104,39 @@ export const PublicMenu: React.FC<PublicMenuProps> = ({
       }
     }
     return [...list].sort((a, b) => a.display_order - b.display_order);
-  }, [categories, selectedMealTime]);
+  }, [categories, selectedMealTime, restaurant.id]);
 
   // Filter items based on active categories and search query
   const itemsByCategory = useMemo(() => {
     const q = searchQuery.toLowerCase().trim();
     const map = new Map<string, MenuItem[]>();
+    const casariyoIds = new Set(['bf_07', 'bf_08', 'bf_09', 'ff_08', 'ff_07']);
 
     for (const cat of filteredCategories) {
+      const isCasariyo = cat.id === 'cat_casariyo' || cat.meal_time === 'casariyo';
       const catItems = items
-        .filter((i) => i.category_id === cat.id)
+        .filter((i) => {
+          if (isCasariyo) {
+            return (
+              i.category_id === 'cat_casariyo' ||
+              casariyoIds.has(i.id) ||
+              ['keks', 'sambuus', 'mulawah'].some((k) => i.name.toLowerCase().includes(k))
+            );
+          }
+          if (cat.id === 'cat_breakfast') {
+            if (['bf_07', 'bf_08', 'bf_09'].includes(i.id)) return false;
+          }
+          if (cat.id === 'cat_lunch_mains') {
+            if (['ff_07', 'ff_08'].includes(i.id)) return false;
+          }
+          return i.category_id === cat.id;
+        })
+        .map((i) => {
+          if (i.id === 'bf_07' && isCasariyo && !i.name.includes('Keks')) {
+            return { ...i, name: 'Keks', category_id: 'cat_casariyo' };
+          }
+          return i;
+        })
         .filter((i) => {
           if (!q) return true;
           return (

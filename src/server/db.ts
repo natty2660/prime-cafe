@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
 import { Pool } from 'pg';
-import { DatabaseState, getInitialState } from '../lib/storage.ts';
+import { DatabaseState, getInitialState, reconcileDatabaseState } from '../lib/storage.ts';
 
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'primecafe2026';
 const ADMIN_SECRET = process.env.ADMIN_SECRET || 'prime_cafe_secret_key_2026';
@@ -69,34 +69,7 @@ export async function initPostgresDatabase(): Promise<boolean> {
       if (res.rows.length > 0 && res.rows[0].state) {
         const stored = res.rows[0].state as DatabaseState;
         if (stored.restaurant && Array.isArray(stored.categories) && Array.isArray(stored.items)) {
-          // If stored state is from an older schema/version, ensure current categories and address take precedence
-          const fresh = getInitialState();
-          const freshMap = new Map(fresh.items.map((it) => [it.id, it]));
-          const mergedItems = (stored.items && stored.items.length > 0 ? stored.items : fresh.items).map((item) => {
-            const freshItem = freshMap.get(item.id);
-            if (freshItem && freshItem.image_url) {
-              if (!item.image_url || item.image_url.startsWith('/assets/images/')) {
-                return { ...item, image_url: freshItem.image_url };
-              }
-            }
-            return item;
-          });
-
-          // Keep custom items/prices if already updated, but ensure location is Jijiga and categories are organized
-          const merged: DatabaseState = {
-            restaurant: {
-              ...fresh.restaurant,
-              ...stored.restaurant,
-              address: 'Jijiga, Ethiopia',
-              opening_hours: '8:30 AM – 10:00 PM Daily',
-              phone: undefined,
-              wifi_available: false,
-            },
-            categories: fresh.categories,
-            items: mergedItems,
-            last_updated: res.rows[0].updated_at || new Date().toISOString(),
-            admin_password: stored.admin_password,
-          };
+          const merged = reconcileDatabaseState(stored);
           inMemoryState = merged;
           await client.query(
             'INSERT INTO prime_cafe_menu (id, state, updated_at) VALUES ($1, $2, NOW()) ON CONFLICT (id) DO UPDATE SET state = $2, updated_at = NOW()',
@@ -150,18 +123,7 @@ export function getDatabase(): DatabaseState {
       const data = fs.readFileSync(filePath, 'utf-8');
       const parsed = JSON.parse(data) as DatabaseState;
       if (parsed.restaurant && Array.isArray(parsed.categories) && Array.isArray(parsed.items)) {
-        const fresh = getInitialState();
-        const freshMap = new Map(fresh.items.map((it) => [it.id, it]));
-        parsed.items = parsed.items.map((item) => {
-          const freshItem = freshMap.get(item.id);
-          if (freshItem && freshItem.image_url) {
-            if (!item.image_url || item.image_url.startsWith('/assets/images/')) {
-              return { ...item, image_url: freshItem.image_url };
-            }
-          }
-          return item;
-        });
-        inMemoryState = parsed;
+        inMemoryState = reconcileDatabaseState(parsed);
         return inMemoryState;
       }
     }

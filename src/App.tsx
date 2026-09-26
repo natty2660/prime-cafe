@@ -3,6 +3,7 @@ import { Restaurant, Category, MenuItem } from './types/index.ts';
 import {
   loadClientState,
   saveClientState,
+  reconcileDatabaseState,
   DatabaseState,
 } from './lib/storage.ts';
 import { PublicMenu } from './components/PublicMenu.tsx';
@@ -45,12 +46,13 @@ export default function App() {
       if (res.ok) {
         const data = await res.json();
         if (data.restaurant && data.categories && data.items) {
-          const freshState: DatabaseState = {
+          const rawState: DatabaseState = {
             restaurant: data.restaurant,
             categories: data.categories,
             items: data.items,
             last_updated: data.generated_at || new Date().toISOString(),
           };
+          const freshState = reconcileDatabaseState(rawState);
           setDbState(freshState);
           saveClientState(freshState);
         }
