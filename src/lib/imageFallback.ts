@@ -13,6 +13,7 @@ const SPECIAL_CANONICAL_MAP: Record<string, string> = {
   'gourmet_milkshake_1790235124208.jpg': 'primecafe_vanilla_milkshake.jpg',
   'artisan_ice_cream_1790216736113.jpg': 'primecafe_vanilla_ice_cream.jpg',
   'prime_cafe_wall_logo_1790230397113.jpg': 'prime_cafe_luxury_bg_1790216722377.jpg',
+  'primecafe_keks_1790388963236.jpg': 'primecafe_bankeke_1790236996406.jpg',
 };
 
 // Build reverse map for clean -> timestamp
